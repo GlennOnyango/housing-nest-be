@@ -1,0 +1,558 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum OrgRole {
+  OWNER
+  AGENT
+  CARETAKER
+  ADMIN
+  TENANT
+  SERVICE_PROVIDER
+  ADMIN_PLATFORM
+}
+
+enum UnitStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+}
+
+enum LeaseStatus {
+  PENDING
+  ACTIVE
+  ENDED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  PARTIAL
+  VOID
+  OVERDUE
+}
+
+enum InvoiceLineType {
+  RENT
+  SERVICE_CHARGE
+  ARREARS
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  REVERSED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum NoticeScope {
+  ORG
+  PROPERTY
+  UNIT
+  TENANT
+}
+
+model User {
+  id           String          @id @default(cuid())
+  email        String?         @unique
+  passwordHash String?
+  isActive     Boolean         @default(true)
+  failedLoginCount Int         @default(0)
+  lockedUntil  DateTime?
+  lastLoginAt  DateTime?
+  profile      Profile?
+  memberships  OrgMembership[]
+  ownedOrganizations Organization[] @relation("OrgOwner")
+  tenantLeases TenantLease[]   @relation("TenantLeases")
+  invoices     Invoice[]       @relation("TenantInvoices")
+  tickets      Ticket[]        @relation("TenantTickets")
+  assignedTickets Ticket[]      @relation("AssignedTickets")
+  notices      Notice[]        @relation("TenantNotices")
+  refreshTokens RefreshToken[]
+  auditLogs    AuditLog[]      @relation("AuditActor")
+  fileAssets   FileAsset[]     @relation("OwnerAssets")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RefreshToken {
+  id           String   @id @default(cuid())
+  userId       String
+  tokenHash    String
+  sessionId    String
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  rotatedAt    DateTime?
+  revokedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([expiresAt])
+}
+
+model MagicLinkToken {
+  id         String   @id @default(cuid())
+  email      String
+  tokenHash  String
+  expiresAt  DateTime
+  consumedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
+model Profile {
+  id         String  @id @default(cuid())
+  userId     String  @unique
+  firstName  String?
+  lastName   String?
+  phone      String?
+  nationalId String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([phone])
+}
+
+model Organization {
+  id           String          @id @default(cuid())
+  name         String
+  ownerUserId  String
+  owner        User            @relation("OrgOwner", fields: [ownerUserId], references: [id])
+  memberships  OrgMembership[]
+  properties   Property[]
+  amenities    Amenity[]
+  serviceProviders ServiceProvider[]
+  units        HouseUnit[]
+  tickets      Ticket[]
+  leases       TenantLease[]
+  templates    LeaseTemplate[]
+  invoices     Invoice[]
+  notices      Notice[]
+  invites      OnboardingInvite[]
+  onboardingConfig OnboardingConfig?
+  auditLogs    AuditLog[]
+  fileAssets   FileAsset[]
+  invoiceLinkTtlMinutes Int @default(60)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OnboardingConfig {
+  id                 String  @id @default(cuid())
+  orgId              String  @unique
+  requiredDocuments  Json?
+  requiredProfileFields Json?
+  requiredLeaseTemplateIds Json?
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrgMembership {
+  id     String  @id @default(cuid())
+  userId String
+  orgId  String
+  role   OrgRole
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@unique([userId, orgId])
+  @@index([orgId])
+}
+
+model Property {
+  id           String     @id @default(cuid())
+  orgId        String
+  name         String
+  metadata     Json?
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  state        String?
+  postalCode   String?
+  country      String?
+  deletedAt    DateTime?
+
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  units HouseUnit[]
+  notices Notice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([orgId, name])
+  @@index([orgId])
+}
+
+model HouseUnit {
+  id            String     @id @default(cuid())
+  orgId         String
+  propertyId    String
+  unitLabel     String
+  floor         Int?
+  status        UnitStatus @default(AVAILABLE)
+  rent          Decimal    @db.Decimal(12, 2)
+  deposit       Decimal    @db.Decimal(12, 2)
+  serviceCharge Decimal    @db.Decimal(12, 2)
+  deletedAt     DateTime?
+
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  property  Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  amenities HouseAmenity[]
+  leases    TenantLease[]
+  invoices  Invoice[]
+  tickets   Ticket[]
+  notices   Notice[]
+  invites   OnboardingInvite[]
+  rentChanges UnitRentChange[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([propertyId, unitLabel])
+  @@index([orgId])
+  @@index([propertyId])
+}
+
+model UnitRentChange {
+  id          String   @id @default(cuid())
+  orgId       String
+  houseUnitId String
+  effectiveAt DateTime
+  rent        Decimal   @db.Decimal(12, 2)
+  deposit     Decimal   @db.Decimal(12, 2)
+  serviceCharge Decimal @db.Decimal(12, 2)
+  actorUserId String?
+
+  houseUnit HouseUnit @relation(fields: [houseUnitId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([orgId])
+  @@index([houseUnitId])
+}
+
+model Amenity {
+  id    String @id @default(cuid())
+  orgId String
+  name  String
+
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  units HouseAmenity[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([orgId, name])
+  @@index([orgId])
+}
+
+model HouseAmenity {
+  houseUnitId String
+  amenityId   String
+  assignedAt  DateTime @default(now())
+
+  houseUnit HouseUnit @relation(fields: [houseUnitId], references: [id], onDelete: Cascade)
+  amenity   Amenity   @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([houseUnitId, amenityId])
+}
+
+model ServiceProvider {
+  id       String  @id @default(cuid())
+  orgId    String
+  name     String
+  category String
+  contacts Json?
+  vetted   Boolean @default(false)
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgId])
+}
+
+model TenantLease {
+  id                   String      @id @default(cuid())
+  orgId                String
+  houseUnitId          String
+  tenantUserId         String
+  status               LeaseStatus @default(PENDING)
+  startDate            DateTime
+  endDate              DateTime?
+  signedAt             DateTime?
+  rentSnapshot         Decimal     @db.Decimal(12, 2)
+  depositSnapshot      Decimal     @db.Decimal(12, 2)
+  serviceChargeSnapshot Decimal    @db.Decimal(12, 2)
+
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  houseUnit HouseUnit    @relation(fields: [houseUnitId], references: [id], onDelete: Cascade)
+  tenant    User         @relation("TenantLeases", fields: [tenantUserId], references: [id], onDelete: Cascade)
+  documents LeaseDocument[]
+  invoices  Invoice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgId])
+  @@index([tenantUserId])
+  @@index([houseUnitId])
+}
+
+model LeaseTemplate {
+  id              String @id @default(cuid())
+  orgId           String
+  name            String
+  version         Int
+  requiredFields  Json?
+  documentMarkdown String?
+  documentHtml    String?
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([orgId, name, version])
+  @@index([orgId])
+}
+
+model LeaseDocument {
+  id             String  @id @default(cuid())
+  tenantLeaseId  String
+  templateVersion Int
+  renderedPdfUrl String
+  pdfHash        String
+  signatureEvidence Json?
+  signedAt       DateTime?
+
+  lease TenantLease @relation(fields: [tenantLeaseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantLeaseId])
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  orgId         String
+  tenantUserId  String
+  houseUnitId   String
+  tenantLeaseId String?
+  period        String
+  total         Decimal       @db.Decimal(12, 2)
+  status        InvoiceStatus @default(PENDING)
+
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  tenant    User         @relation("TenantInvoices", fields: [tenantUserId], references: [id], onDelete: Cascade)
+  houseUnit HouseUnit    @relation(fields: [houseUnitId], references: [id], onDelete: Cascade)
+  lease     TenantLease? @relation(fields: [tenantLeaseId], references: [id], onDelete: SetNull)
+  lines     InvoiceLine[]
+  payments  Payment[]
+  deliveryLogs InvoiceDeliveryLog[]
+  links        InvoiceLink[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([orgId, tenantUserId, houseUnitId, period])
+  @@index([orgId])
+}
+
+model InvoiceLine {
+  id        String          @id @default(cuid())
+  invoiceId String
+  type      InvoiceLineType
+  amount    Decimal         @db.Decimal(12, 2)
+  meta      Json?
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  invoiceId String
+  provider  String
+  reference String?
+  amount    Decimal       @db.Decimal(12, 2)
+  status    PaymentStatus @default(PENDING)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model InvoiceLink {
+  id        String   @id @default(cuid())
+  invoiceId String
+  tokenHash String
+  expiresAt DateTime
+  consumedAt DateTime?
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([invoiceId])
+  @@index([expiresAt])
+}
+
+model InvoiceDeliveryLog {
+  id         String   @id @default(cuid())
+  invoiceId  String
+  channel    String
+  status     String
+  provider   String?
+  payload    Json?
+  error      String?
+  attempt    Int      @default(1)
+  nextRetryAt DateTime?
+  deadLetteredAt DateTime?
+  attemptedAt DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+}
+
+model Ticket {
+  id           String       @id @default(cuid())
+  orgId        String
+  houseUnitId  String?
+  tenantUserId String?
+  assignedUserId String?
+  status       TicketStatus @default(OPEN)
+  category     String
+  description  String
+  attachments  Json?
+
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  houseUnit HouseUnit?   @relation(fields: [houseUnitId], references: [id], onDelete: SetNull)
+  tenant    User?        @relation("TenantTickets", fields: [tenantUserId], references: [id], onDelete: SetNull)
+  assigned  User?        @relation("AssignedTickets", fields: [assignedUserId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgId])
+}
+
+model Notice {
+  id           String      @id @default(cuid())
+  orgId        String
+  propertyId   String?
+  houseUnitId  String?
+  tenantUserId String?
+  scope        NoticeScope @default(ORG)
+  title        String
+  body         String
+  startsAt     DateTime?
+  endsAt       DateTime?
+
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  property  Property?    @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  houseUnit HouseUnit?   @relation(fields: [houseUnitId], references: [id], onDelete: SetNull)
+  tenant    User?        @relation("TenantNotices", fields: [tenantUserId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([orgId])
+}
+
+model AuditLog {
+  id          String  @id @default(cuid())
+  orgId       String?
+  actorUserId String?
+  action      String
+  entity      String
+  entityId    String?
+  beforeHash  String?
+  afterHash   String?
+  meta        Json?
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  actor User?         @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([orgId])
+}
+
+model OnboardingInvite {
+  id          String   @id @default(cuid())
+  orgId       String
+  houseUnitId String?
+  tokenHash   String
+  tenantEmail String?
+  tenantPhone String?
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  purpose     String?
+  claimedAt   DateTime?
+
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  houseUnit HouseUnit?   @relation(fields: [houseUnitId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([orgId])
+  @@index([houseUnitId])
+}
+
+model FileAsset {
+  id            String  @id @default(cuid())
+  orgId         String?
+  ownerUserId   String?
+  type          String
+  url           String
+  checksum      String?
+  encryptedMeta Json?
+  deletedAt     DateTime?
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  owner User?         @relation("OwnerAssets", fields: [ownerUserId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([orgId])
+  @@index([ownerUserId])
+}
