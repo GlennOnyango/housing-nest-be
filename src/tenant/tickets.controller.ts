@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -50,6 +60,11 @@ export class TicketsController {
     @Body() dto: UpdateTicketDto,
     @Req() req: Request & { user?: { id: string } },
   ) {
-    return this.ticketsService.updateTicket(orgId, ticketId, req.user?.id ?? '', dto);
+    return this.ticketsService.updateTicket(
+      orgId,
+      ticketId,
+      req.user?.id ?? '',
+      dto,
+    );
   }
 }

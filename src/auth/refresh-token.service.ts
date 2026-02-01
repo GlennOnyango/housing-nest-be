@@ -37,7 +37,9 @@ export class RefreshTokenService {
     newToken: string;
     expiresAt: Date;
   }): Promise<void> {
-    const tokenHash = await this.passwordService.hashRefreshToken(params.newToken);
+    const tokenHash = await this.passwordService.hashRefreshToken(
+      params.newToken,
+    );
     await this.prisma.refreshToken.update({
       where: { id: params.tokenId },
       data: {

@@ -22,7 +22,11 @@ export class TenantController {
   ) {
     const parsedPage = Math.max(1, Number(page) || 1);
     const parsedPageSize = Math.min(100, Math.max(1, Number(pageSize) || 20));
-    return this.tenantService.getLeases(req.user?.id ?? '', parsedPage, parsedPageSize);
+    return this.tenantService.getLeases(
+      req.user?.id ?? '',
+      parsedPage,
+      parsedPageSize,
+    );
   }
 
   @Get('invoices')

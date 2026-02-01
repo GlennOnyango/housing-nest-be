@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { InviteMemberDto } from './dto/invite-member.dto';
@@ -21,7 +25,11 @@ export class OrgsService {
     if (!membership || membership.role === 'TENANT') {
       throw new ForbiddenException();
     }
-    if (membership.role !== 'OWNER' && membership.role !== 'AGENT' && membership.role !== 'ADMIN') {
+    if (
+      membership.role !== 'OWNER' &&
+      membership.role !== 'AGENT' &&
+      membership.role !== 'ADMIN'
+    ) {
       throw new ForbiddenException();
     }
 

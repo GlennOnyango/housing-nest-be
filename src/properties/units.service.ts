@@ -11,7 +11,12 @@ export class UnitsService {
     private readonly auditLogService: AuditLogService,
   ) {}
 
-  async create(orgId: string, propertyId: string, actorUserId: string, dto: CreateUnitDto) {
+  async create(
+    orgId: string,
+    propertyId: string,
+    actorUserId: string,
+    dto: CreateUnitDto,
+  ) {
     const property = await this.prisma.property.findFirst({
       where: { id: propertyId, orgId, deletedAt: null },
     });
@@ -55,7 +60,12 @@ export class UnitsService {
     return unit;
   }
 
-  async update(orgId: string, unitId: string, actorUserId: string, dto: UpdateUnitDto) {
+  async update(
+    orgId: string,
+    unitId: string,
+    actorUserId: string,
+    dto: UpdateUnitDto,
+  ) {
     const unit = await this.prisma.houseUnit.findFirst({
       where: { id: unitId, orgId, deletedAt: null },
     });

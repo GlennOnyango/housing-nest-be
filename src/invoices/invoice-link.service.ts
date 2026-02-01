@@ -46,7 +46,10 @@ export class InvoiceLinkService {
     });
 
     for (const link of candidates) {
-      const ok = await this.passwordService.verifyRefreshToken(link.tokenHash, token);
+      const ok = await this.passwordService.verifyRefreshToken(
+        link.tokenHash,
+        token,
+      );
       if (!ok) {
         continue;
       }

@@ -21,7 +21,12 @@ export class TenantService {
     return { items, total, page, pageSize };
   }
 
-  async getInvoices(userId: string, status: string | undefined, page: number, pageSize: number) {
+  async getInvoices(
+    userId: string,
+    status: string | undefined,
+    page: number,
+    pageSize: number,
+  ) {
     const where = {
       tenantUserId: userId,
       status: status ? (status as never) : undefined,
@@ -53,9 +58,15 @@ export class TenantService {
   async getBalance(userId: string) {
     const invoices = await this.prisma.invoice.findMany({
       where: { tenantUserId: userId },
-      select: { total: true, payments: { select: { amount: true, status: true } } },
+      select: {
+        total: true,
+        payments: { select: { amount: true, status: true } },
+      },
     });
-    const total = invoices.reduce((sum, invoice) => sum + Number(invoice.total), 0);
+    const total = invoices.reduce(
+      (sum, invoice) => sum + Number(invoice.total),
+      0,
+    );
     const paid = invoices.reduce((sum, invoice) => {
       const invoicePaid = invoice.payments.reduce((p, payment) => {
         if (payment.status === 'CONFIRMED') {

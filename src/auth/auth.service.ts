@@ -68,7 +68,10 @@ export class AuthService {
     return this.issueTokens(owner.id);
   }
 
-  async login(dto: LoginDto, meta: { ip?: string; userAgent?: string }): Promise<AuthTokens> {
+  async login(
+    dto: LoginDto,
+    meta: { ip?: string; userAgent?: string },
+  ): Promise<AuthTokens> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -79,7 +82,10 @@ export class AuthService {
       throw new UnauthorizedException('Account locked');
     }
 
-    const ok = await this.passwordService.verifyPassword(user.passwordHash, dto.password);
+    const ok = await this.passwordService.verifyPassword(
+      user.passwordHash,
+      dto.password,
+    );
     if (!ok) {
       await this.loginAttemptService.registerFailure(user.id);
       throw new UnauthorizedException();
@@ -94,7 +100,10 @@ export class AuthService {
     return this.issueTokens(user.id, meta);
   }
 
-  async refresh(refreshToken: string, meta: { ip?: string; userAgent?: string }): Promise<AuthTokens> {
+  async refresh(
+    refreshToken: string,
+    meta: { ip?: string; userAgent?: string },
+  ): Promise<AuthTokens> {
     const stored = await this.prisma.refreshToken.findMany({
       where: {
         revokedAt: null,
@@ -198,7 +207,10 @@ export class AuthService {
     return this.issueTokens(user.id);
   }
 
-  private async issueTokens(userId: string, meta?: { ip?: string; userAgent?: string }) {
+  private async issueTokens(
+    userId: string,
+    meta?: { ip?: string; userAgent?: string },
+  ) {
     const accessToken = await this.jwtService.signAsync({
       sub: userId,
     });
@@ -225,7 +237,9 @@ export class AuthService {
     token: string,
   ) {
     for (const stored of tokens) {
-      if (await this.passwordService.verifyRefreshToken(stored.tokenHash, token)) {
+      if (
+        await this.passwordService.verifyRefreshToken(stored.tokenHash, token)
+      ) {
         return stored;
       }
     }
@@ -237,7 +251,9 @@ export class AuthService {
     token: string,
   ) {
     for (const stored of tokens) {
-      if (await this.passwordService.verifyRefreshToken(stored.tokenHash, token)) {
+      if (
+        await this.passwordService.verifyRefreshToken(stored.tokenHash, token)
+      ) {
         return stored;
       }
     }

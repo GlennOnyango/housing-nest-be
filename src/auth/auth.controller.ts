@@ -25,7 +25,8 @@ export class AuthController {
   @Post('login')
   @ApiOkResponse({ type: AuthTokensDto })
   async login(@Body() dto: LoginDto, @Req() req: Request) {
-    const ip = req.headers['x-forwarded-for']?.toString() ?? req.socket.remoteAddress;
+    const ip =
+      req.headers['x-forwarded-for']?.toString() ?? req.socket.remoteAddress;
     const userAgent = req.headers['user-agent'];
     return this.authService.login(dto, {
       ip: typeof ip === 'string' ? ip : undefined,
@@ -36,7 +37,8 @@ export class AuthController {
   @Post('refresh')
   @ApiOkResponse({ type: AuthTokensDto })
   async refresh(@Body() dto: RefreshDto, @Req() req: Request) {
-    const ip = req.headers['x-forwarded-for']?.toString() ?? req.socket.remoteAddress;
+    const ip =
+      req.headers['x-forwarded-for']?.toString() ?? req.socket.remoteAddress;
     const userAgent = req.headers['user-agent'];
     return this.authService.refresh(dto.refreshToken, {
       ip: typeof ip === 'string' ? ip : undefined,

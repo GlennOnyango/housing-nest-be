@@ -48,7 +48,12 @@ export class AmenitiesController {
     @Req() req: Request & { user?: { id: string; orgIds: string[] } },
   ) {
     const orgId = req.user?.orgIds[0] ?? '';
-    await this.amenitiesService.assign(orgId, unitId, amenityId, req.user?.id ?? '');
+    await this.amenitiesService.assign(
+      orgId,
+      unitId,
+      amenityId,
+      req.user?.id ?? '',
+    );
   }
 
   @Delete('units/:unitId/amenities/:amenityId')
@@ -59,6 +64,11 @@ export class AmenitiesController {
     @Req() req: Request & { user?: { id: string; orgIds: string[] } },
   ) {
     const orgId = req.user?.orgIds[0] ?? '';
-    await this.amenitiesService.unassign(orgId, unitId, amenityId, req.user?.id ?? '');
+    await this.amenitiesService.unassign(
+      orgId,
+      unitId,
+      amenityId,
+      req.user?.id ?? '',
+    );
   }
 }

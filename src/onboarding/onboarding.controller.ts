@@ -59,7 +59,11 @@ export class OnboardingController {
     @Req() req: Request & { user?: { id: string; orgIds: string[] } },
   ) {
     const orgId = req.user?.orgIds[0] ?? '';
-    return this.onboardingService.createLeaseTemplate(orgId, req.user?.id ?? '', dto);
+    return this.onboardingService.createLeaseTemplate(
+      orgId,
+      req.user?.id ?? '',
+      dto,
+    );
   }
 
   @Post('lease-templates/:id/new-version')
@@ -71,7 +75,12 @@ export class OnboardingController {
     @Req() req: Request & { user?: { id: string; orgIds: string[] } },
   ) {
     const orgId = req.user?.orgIds[0] ?? '';
-    return this.onboardingService.newLeaseTemplateVersion(orgId, req.user?.id ?? '', id, dto);
+    return this.onboardingService.newLeaseTemplateVersion(
+      orgId,
+      req.user?.id ?? '',
+      id,
+      dto,
+    );
   }
 
   @Get('lease-templates')
@@ -91,7 +100,12 @@ export class OnboardingController {
     @Req() req: Request & { user?: { id: string; orgIds: string[] } },
   ) {
     const orgId = req.user?.orgIds[0] ?? '';
-    return this.onboardingService.inviteTenant(orgId, unitId, req.user?.id ?? '', dto);
+    return this.onboardingService.inviteTenant(
+      orgId,
+      unitId,
+      req.user?.id ?? '',
+      dto,
+    );
   }
 
   @Post('onboarding/claim')
@@ -111,11 +125,17 @@ export class OnboardingController {
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   async signLease(@Body() dto: SignLeaseDto, @Req() req: Request) {
     const token = req.headers['x-invite-token']?.toString() ?? '';
-    const ip = req.headers['x-forwarded-for']?.toString() ?? req.socket.remoteAddress;
+    const ip =
+      req.headers['x-forwarded-for']?.toString() ?? req.socket.remoteAddress;
     const userAgent = req.headers['user-agent'];
-    return this.onboardingService.signLease(token, dto.leaseId, dto.signatureImageUrl, {
-      ip: typeof ip === 'string' ? ip : undefined,
-      userAgent: typeof userAgent === 'string' ? userAgent : undefined,
-    });
+    return this.onboardingService.signLease(
+      token,
+      dto.leaseId,
+      dto.signatureImageUrl,
+      {
+        ip: typeof ip === 'string' ? ip : undefined,
+        userAgent: typeof userAgent === 'string' ? userAgent : undefined,
+      },
+    );
   }
 }

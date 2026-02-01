@@ -53,7 +53,12 @@ export class PropertiesService {
     return property;
   }
 
-  async update(orgId: string, id: string, actorUserId: string, dto: UpdatePropertyDto) {
+  async update(
+    orgId: string,
+    id: string,
+    actorUserId: string,
+    dto: UpdatePropertyDto,
+  ) {
     const existing = await this.prisma.property.findFirst({
       where: { id, orgId, deletedAt: null },
     });

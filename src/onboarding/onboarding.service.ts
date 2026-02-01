@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { AuditLogService } from '../audit/audit-log.service';
 import { PasswordService } from '../auth/password.service';
@@ -25,7 +29,11 @@ export class OnboardingService {
     });
   }
 
-  async updateConfig(orgId: string, actorUserId: string, dto: UpdateOnboardingConfigDto) {
+  async updateConfig(
+    orgId: string,
+    actorUserId: string,
+    dto: UpdateOnboardingConfigDto,
+  ) {
     const config = await this.prisma.onboardingConfig.upsert({
       where: { orgId },
       update: {
@@ -52,7 +60,11 @@ export class OnboardingService {
     return config;
   }
 
-  async createLeaseTemplate(orgId: string, actorUserId: string, dto: CreateLeaseTemplateDto) {
+  async createLeaseTemplate(
+    orgId: string,
+    actorUserId: string,
+    dto: CreateLeaseTemplateDto,
+  ) {
     const template = await this.prisma.leaseTemplate.create({
       data: {
         orgId,
@@ -211,18 +223,17 @@ export class OnboardingService {
       throw new NotFoundException();
     }
 
-    const user =
-      invite.tenantEmail
-        ? await this.prisma.user.upsert({
-            where: { email: invite.tenantEmail },
-            update: {},
-            create: {
-              email: invite.tenantEmail,
-            },
-          })
-        : await this.prisma.user.create({
-            data: {},
-          });
+    const user = invite.tenantEmail
+      ? await this.prisma.user.upsert({
+          where: { email: invite.tenantEmail },
+          update: {},
+          create: {
+            email: invite.tenantEmail,
+          },
+        })
+      : await this.prisma.user.create({
+          data: {},
+        });
 
     await this.prisma.profile.upsert({
       where: { userId: user.id },

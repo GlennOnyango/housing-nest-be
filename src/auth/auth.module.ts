@@ -24,6 +24,11 @@ import { RefreshTokenService } from './refresh-token.service';
     LoginAttemptService,
     JwtAuthGuard,
   ],
-  exports: [AuthService, PasswordService, RefreshTokenService, LoginAttemptService],
+  exports: [
+    AuthService,
+    PasswordService,
+    RefreshTokenService,
+    LoginAttemptService,
+  ],
 })
 export class AuthModule {}

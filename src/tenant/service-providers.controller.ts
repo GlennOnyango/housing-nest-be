@@ -11,7 +11,9 @@ import { ServiceProvidersService } from './service-providers.service';
 @Controller('tenant/me')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ServiceProvidersController {
-  constructor(private readonly serviceProvidersService: ServiceProvidersService) {}
+  constructor(
+    private readonly serviceProvidersService: ServiceProvidersService,
+  ) {}
 
   @Get('service-providers')
   @RequireRole('TENANT')
@@ -19,6 +21,9 @@ export class ServiceProvidersController {
     @Req() req: Request & { user?: { id: string } },
     @Query('category') category?: string,
   ) {
-    return this.serviceProvidersService.listForTenant(req.user?.id ?? '', category);
+    return this.serviceProvidersService.listForTenant(
+      req.user?.id ?? '',
+      category,
+    );
   }
 }

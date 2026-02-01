@@ -46,7 +46,12 @@ export class OrgsController {
     @Body() dto: UpdateMemberRoleDto,
     @Req() req: Request & { user?: { id: string } },
   ) {
-    return this.orgsService.updateMemberRole(orgId, memberId, req.user?.id ?? '', dto);
+    return this.orgsService.updateMemberRole(
+      orgId,
+      memberId,
+      req.user?.id ?? '',
+      dto,
+    );
   }
 
   @Delete(':orgId/members/:memberId')

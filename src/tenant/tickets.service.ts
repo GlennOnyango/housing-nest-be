@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { AuditLogService } from '../audit/audit-log.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
@@ -42,11 +46,22 @@ export class TicketsService {
     return ticket;
   }
 
-  async updateTicket(orgId: string, ticketId: string, actorUserId: string, dto: UpdateTicketDto) {
+  async updateTicket(
+    orgId: string,
+    ticketId: string,
+    actorUserId: string,
+    dto: UpdateTicketDto,
+  ) {
     const membership = await this.prisma.orgMembership.findFirst({
       where: { orgId, userId: actorUserId, deletedAt: null },
     });
-    if (!membership || (membership.role !== 'CARETAKER' && membership.role !== 'AGENT' && membership.role !== 'OWNER' && membership.role !== 'ADMIN')) {
+    if (
+      !membership ||
+      (membership.role !== 'CARETAKER' &&
+        membership.role !== 'AGENT' &&
+        membership.role !== 'OWNER' &&
+        membership.role !== 'ADMIN')
+    ) {
       throw new ForbiddenException();
     }
 
@@ -71,17 +86,31 @@ export class TicketsService {
       action: 'TICKET_UPDATE',
       entity: 'Ticket',
       entityId: ticket.id,
-      meta: { status: dto.status, assignedCaretakerId: dto.assignedCaretakerId },
+      meta: {
+        status: dto.status,
+        assignedCaretakerId: dto.assignedCaretakerId,
+      },
     });
 
     return updated;
   }
 
-  async listForCaretaker(orgId: string, userId: string, page: number, pageSize: number) {
+  async listForCaretaker(
+    orgId: string,
+    userId: string,
+    page: number,
+    pageSize: number,
+  ) {
     const membership = await this.prisma.orgMembership.findFirst({
       where: { orgId, userId, deletedAt: null },
     });
-    if (!membership || (membership.role !== 'CARETAKER' && membership.role !== 'AGENT' && membership.role !== 'OWNER' && membership.role !== 'ADMIN')) {
+    if (
+      !membership ||
+      (membership.role !== 'CARETAKER' &&
+        membership.role !== 'AGENT' &&
+        membership.role !== 'OWNER' &&
+        membership.role !== 'ADMIN')
+    ) {
       throw new ForbiddenException();
     }
 

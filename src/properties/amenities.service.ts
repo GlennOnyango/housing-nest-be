@@ -36,7 +36,12 @@ export class AmenitiesService {
     });
   }
 
-  async assign(orgId: string, unitId: string, amenityId: string, actorUserId: string) {
+  async assign(
+    orgId: string,
+    unitId: string,
+    amenityId: string,
+    actorUserId: string,
+  ) {
     const unit = await this.prisma.houseUnit.findFirst({
       where: { id: unitId, orgId, deletedAt: null },
     });
@@ -67,7 +72,12 @@ export class AmenitiesService {
     });
   }
 
-  async unassign(orgId: string, unitId: string, amenityId: string, actorUserId: string) {
+  async unassign(
+    orgId: string,
+    unitId: string,
+    amenityId: string,
+    actorUserId: string,
+  ) {
     const unit = await this.prisma.houseUnit.findFirst({
       where: { id: unitId, orgId, deletedAt: null },
     });
