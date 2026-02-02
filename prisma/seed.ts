@@ -1,9 +1,34 @@
 import { PrismaClient, UnitStatus } from '@prisma/client';
+import * as argon2 from 'argon2';
 import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 
 async function main(): Promise<void> {
+  const adminEmail = process.env.ADMIN_BOOTSTRAP_EMAIL;
+  const adminPassword = process.env.ADMIN_BOOTSTRAP_PASSWORD;
+  const adminBootstrapEnabled = process.env.ADMIN_BOOTSTRAP_ENABLED === 'true';
+  if (adminBootstrapEnabled && adminEmail && adminPassword) {
+    const passwordHash = await argon2.hash(adminPassword, {
+      type: argon2.argon2id,
+      memoryCost: 19456,
+      timeCost: 2,
+      parallelism: 1,
+    });
+    await prisma.user.upsert({
+      where: { email: adminEmail },
+      update: {
+        passwordHash,
+        isPlatformAdmin: true,
+      },
+      create: {
+        email: adminEmail,
+        passwordHash,
+        isPlatformAdmin: true,
+      },
+    });
+  }
+
   const ownerEmail = 'owner@example.com';
 
   const owner = await prisma.user.upsert({

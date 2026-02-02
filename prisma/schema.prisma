@@ -75,6 +75,10 @@ model User {
   failedLoginCount Int         @default(0)
   lockedUntil  DateTime?
   lastLoginAt  DateTime?
+  mfaEnabled   Boolean         @default(false)
+  mfaSecret    String?
+  isPlatformAdmin Boolean      @default(false)
+  recoveryCodes AdminRecoveryCode[]
   profile      Profile?
   memberships  OrgMembership[]
   ownedOrganizations Organization[] @relation("OrgOwner")
@@ -89,6 +93,19 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model AdminRecoveryCode {
+  id         String   @id @default(cuid())
+  userId     String
+  codeHash   String
+  consumedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model RefreshToken {
@@ -160,6 +177,8 @@ model Organization {
   auditLogs    AuditLog[]
   fileAssets   FileAsset[]
   invoiceLinkTtlMinutes Int @default(60)
+  suspendedAt DateTime?
+  suspendedReason String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -547,6 +566,8 @@ model FileAsset {
   checksum      String?
   encryptedMeta Json?
   deletedAt     DateTime?
+  virusScanStatus String @default("PENDING")
+  virusScannedAt DateTime?
 
   org   Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
   owner User?         @relation("OwnerAssets", fields: [ownerUserId], references: [id], onDelete: SetNull)

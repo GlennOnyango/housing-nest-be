@@ -13,6 +13,9 @@ import { PropertiesModule } from './properties/properties.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { TenantModule } from './tenant/tenant.module';
 import { InvoicesModule } from './invoices/invoices.module';
+import { AdminModule } from './admin/admin.module';
+import { FilesModule } from './files/files.module';
+import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -31,7 +34,13 @@ import { PrismaModule } from './prisma/prisma.module';
       pinoHttp: {
         genReqId: (req) => req.headers['x-request-id'] as string,
         autoLogging: true,
-        redact: ['req.headers.authorization', 'req.headers.cookie'],
+        redact: [
+          'req.headers.authorization',
+          'req.headers.cookie',
+          'req.body.email',
+          'req.body.phone',
+          'req.body.nationalId',
+        ],
       },
     }),
     AuthModule,
@@ -41,6 +50,9 @@ import { PrismaModule } from './prisma/prisma.module';
     OnboardingModule,
     TenantModule,
     InvoicesModule,
+    AdminModule,
+    FilesModule,
+    HealthModule,
     PrismaModule,
   ],
   controllers: [AppController],

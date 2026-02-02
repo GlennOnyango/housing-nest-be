@@ -57,6 +57,16 @@ $ pnpm test:e2e
 $ pnpm test:cov
 ```
 
+## Health check
+
+```bash
+GET /health
+```
+
+## CI notes
+
+CI runs lint, test, and build on every push/PR to main. Database migrations are expected to run in deploy, not CI.
+
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
